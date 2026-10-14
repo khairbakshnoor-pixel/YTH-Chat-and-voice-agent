@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <circle cx="128" cy="128" r="120" fill="#123f45" />
+  <circle cx="128" cy="128" r="108" fill="none" stroke="#75c8af" stroke-width="4" />
+  <path d="M55 80h146M72 176h112" fill="none" stroke="#75c8af" stroke-linecap="round" stroke-width="4" />
+  <text x="128" y="151" fill="#fff" font-family="DM Sans,Arial,sans-serif" font-size="58" font-weight="700" text-anchor="middle">YTH</text>
+  <circle cx="211" cy="202" r="17" fill="#a8df74" stroke="#123f45" stroke-width="7" />
+</svg>
