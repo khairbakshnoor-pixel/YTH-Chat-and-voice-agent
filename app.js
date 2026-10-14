@@ -36,6 +36,8 @@ let activeCall = null;
 let messageCounter = 0;
 let leadCapture = { message: "", name: "", email: "", phone: "" };
 let intakeSubmitted = false;
+let chatStarted = false;
+let handoffStarted = false;
 
 function setOpen(isOpen) {
   if (isOpen) setMode("home");
@@ -81,7 +83,7 @@ function getReply(data) {
 async function sendMessage(event) {
   event.preventDefault();
   const message = messageInput.value.trim();
-  if (!message || sendButton.disabled || !intakeSubmitted) return;
+  if (!message || sendButton.disabled || !intakeSubmitted || handoffStarted) return;
 
   leadCapture.message = message;
   messageCounter += 1;
@@ -95,7 +97,7 @@ async function sendMessage(event) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        event: "website_chat_message",
+        event: "website_chat_handoff",
         source: "website_chat",
         conversation_id: getConversationId(),
         message_id: `msg_${Date.now()}_${messageCounter}`,
@@ -117,15 +119,19 @@ async function sendMessage(event) {
     }
     if (!response.ok) throw new Error(`Webhook returned ${response.status}`);
 
+    handoffStarted = true;
+    chatForm.hidden = true;
     const reply = getReply(responseData);
-    addMessage(reply || "Thanks, I've received your message.", "assistant");
+    if (reply) addMessage(reply, "assistant");
+    else chatStatus.textContent = "Connecting you with our team...";
   } catch (error) {
     console.error("Chat webhook request failed:", error);
     chatStatus.textContent = "Couldn't send your message just now. Please try again.";
     messageInput.value = message;
   } finally {
-    sendButton.disabled = false;
-    messageInput.focus();
+    sendButton.disabled = handoffStarted;
+    messageInput.disabled = handoffStarted;
+    if (!handoffStarted) messageInput.focus();
   }
 }
 
@@ -188,13 +194,15 @@ async function submitLead(event) {
 
 function beginChat() {
   if (!intakeSubmitted) return;
-  leadCapture.message = "";
-  messages.replaceChildren();
-  addMessage(`Hi ${leadCapture.name.split(/\s+/)[0]}, how can I help you today?`, "assistant");
-  chatStatus.textContent = "";
-  chatForm.hidden = false;
-  messageInput.disabled = false;
-  sendButton.disabled = false;
+  if (!chatStarted) {
+    messages.replaceChildren();
+    addMessage(`Hi ${leadCapture.name.split(/\s+/)[0]}, how can I help you today?`, "assistant");
+    chatStarted = true;
+  }
+  chatStatus.textContent = handoffStarted ? "Connecting you with our team..." : "";
+  chatForm.hidden = handoffStarted;
+  messageInput.disabled = handoffStarted;
+  sendButton.disabled = handoffStarted;
 }
 
 function getConversationId() {
