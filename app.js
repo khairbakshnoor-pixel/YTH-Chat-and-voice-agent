@@ -14,6 +14,13 @@ const chatView = document.querySelector("#chat-view");
 const voiceView = document.querySelector("#voice-view");
 const chatForm = document.querySelector("#chat-form");
 const messageInput = document.querySelector("#message-input");
+const leadForm = document.querySelector("#lead-form");
+const leadNameInput = document.querySelector("#lead-name");
+const leadPhoneInput = document.querySelector("#lead-phone");
+const leadEmailInput = document.querySelector("#lead-email");
+const leadStatus = document.querySelector("#lead-status");
+const chatChoice = document.querySelector('[data-action="chat"]');
+const chatChoiceHint = document.querySelector("#chat-choice-hint");
 const messages = document.querySelector("#messages");
 const chatStatus = document.querySelector("#chat-status");
 const sendButton = chatForm.querySelector("button");
@@ -27,8 +34,8 @@ const headerStatus = document.querySelector("#header-status");
 let activeMode = "home";
 let activeCall = null;
 let messageCounter = 0;
-let leadCapture = { step: "message", message: "", name: "", email: "", phone: "" };
-let handoffSent = false;
+let leadCapture = { message: "", name: "", email: "", phone: "" };
+let intakeSubmitted = false;
 
 function setOpen(isOpen) {
   if (isOpen) setMode("home");
@@ -74,8 +81,9 @@ function getReply(data) {
 async function sendMessage(event) {
   event.preventDefault();
   const message = messageInput.value.trim();
-  if (!message || sendButton.disabled || handoffSent) return;
+  if (!message || sendButton.disabled || !intakeSubmitted) return;
 
+  leadCapture.message = message;
   messageCounter += 1;
   addMessage(message, "user");
   messageInput.value = "";
@@ -83,113 +91,110 @@ async function sendMessage(event) {
   sendButton.disabled = true;
 
   try {
-    if (leadCapture.step === "message") {
-      leadCapture.message = message;
-      leadCapture.step = "name";
-      addMessage("I'd be happy to help. What name should I use?", "assistant");
-      updateInputForStep();
-      return;
+    const response = await fetch(CHAT_WEBHOOK, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        event: "website_chat_message",
+        source: "website_chat",
+        conversation_id: getConversationId(),
+        message_id: `msg_${Date.now()}_${messageCounter}`,
+        message,
+        name: leadCapture.name,
+        contact_name: leadCapture.name,
+        first_name: leadCapture.name.split(/\s+/)[0],
+        email: leadCapture.email,
+        phone: leadCapture.phone,
+        handoff: true,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+
+    let responseData = null;
+    const responseText = await response.text();
+    if (responseText) {
+      try { responseData = JSON.parse(responseText); } catch { responseData = null; }
     }
+    if (!response.ok) throw new Error(`Webhook returned ${response.status}`);
 
-    if (leadCapture.step === "name") {
-      leadCapture.name = message;
-      leadCapture.step = "email";
-      addMessage("Thanks. What's the best email address for you?", "assistant");
-      updateInputForStep();
-      return;
-    }
-
-    if (leadCapture.step === "email") {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(message)) {
-        addMessage("That email doesn't look quite right. Could you check it and send it again?", "assistant");
-        return;
-      }
-      leadCapture.email = message;
-      leadCapture.step = "phone";
-      addMessage("Got it. What's the best phone number to reach you?", "assistant");
-      updateInputForStep();
-      return;
-    }
-
-    if (leadCapture.step === "phone") {
-      const digitCount = message.replace(/\D/g, "").length;
-      if (digitCount < 7 || digitCount > 15) {
-        addMessage("Please enter a phone number with 7 to 15 digits.", "assistant");
-        return;
-      }
-
-      leadCapture.phone = message;
-      chatStatus.textContent = "Sending your details...";
-      const response = await fetch(CHAT_WEBHOOK, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          event: "website_chat_handoff",
-          source: "website_chat",
-          conversation_id: getConversationId(),
-          message_id: `msg_${Date.now()}_${messageCounter}`,
-          message: leadCapture.message,
-          name: leadCapture.name,
-          contact_name: leadCapture.name,
-          first_name: leadCapture.name.split(/\s+/)[0],
-          email: leadCapture.email,
-          phone: leadCapture.phone,
-          handoff: true,
-          timestamp: new Date().toISOString(),
-        }),
-      });
-
-      let responseData = null;
-      const responseText = await response.text();
-      if (responseText) {
-        try { responseData = JSON.parse(responseText); } catch { responseData = { reply: responseText }; }
-      }
-      if (!response.ok) throw new Error(`Webhook returned ${response.status}`);
-
-      handoffSent = true;
-      leadCapture.step = "handoff";
-      messageInput.disabled = true;
-      const reply = getReply(responseData);
-      const firstName = leadCapture.name.split(/\s+/)[0];
-      addMessage(reply || `Thanks, ${firstName}. We'll be in touch shortly.`, "assistant");
-      chatStatus.textContent = "";
-    }
+    const reply = getReply(responseData);
+    addMessage(reply || "Thanks, I've received your message.", "assistant");
   } catch (error) {
     console.error("Chat webhook request failed:", error);
-    chatStatus.textContent = "Couldn't send your details just now. Please try again.";
+    chatStatus.textContent = "Couldn't send your message just now. Please try again.";
     messageInput.value = message;
   } finally {
-    sendButton.disabled = handoffSent;
-    if (!handoffSent) {
-      updateInputForStep();
-      messageInput.focus();
-    }
+    sendButton.disabled = false;
+    messageInput.focus();
   }
 }
 
-function updateInputForStep() {
-  const settings = {
-    message: { placeholder: "Write a message...", inputMode: "text", autocomplete: "off", maxLength: "1000" },
-    name: { placeholder: "Your name", inputMode: "text", autocomplete: "name", maxLength: "100" },
-    email: { placeholder: "Your email address", inputMode: "email", autocomplete: "email", maxLength: "254" },
-    phone: { placeholder: "Your phone number", inputMode: "tel", autocomplete: "tel", maxLength: "30" },
-  }[leadCapture.step];
-  if (!settings) return;
-  messageInput.placeholder = settings.placeholder;
-  messageInput.inputMode = settings.inputMode;
-  messageInput.autocomplete = settings.autocomplete;
-  messageInput.maxLength = Number(settings.maxLength);
+async function submitLead(event) {
+  event.preventDefault();
+  if (intakeSubmitted) return;
+
+  leadCapture.name = leadNameInput.value.trim();
+  leadCapture.phone = leadPhoneInput.value.trim();
+  leadCapture.email = leadEmailInput.value.trim();
+  const digitCount = leadCapture.phone.replace(/\D/g, "").length;
+  if (digitCount < 7 || digitCount > 15) {
+    chatStatus.textContent = "Please enter a valid phone number.";
+    leadPhoneInput.focus();
+    return;
+  }
+
+  const leadSubmitButton = leadForm.querySelector("button[type='submit']");
+  leadSubmitButton.disabled = true;
+  leadStatus.textContent = "Submitting...";
+
+  try {
+    const response = await fetch(CHAT_WEBHOOK, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        event: "website_chat_lead",
+        source: "website_chat",
+        conversation_id: getConversationId(),
+        message_id: `lead_${Date.now()}`,
+        name: leadCapture.name,
+        contact_name: leadCapture.name,
+        first_name: leadCapture.name.split(/\s+/)[0],
+        email: leadCapture.email,
+        phone: leadCapture.phone,
+        handoff: true,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+
+    let responseData = null;
+    const responseText = await response.text();
+    if (responseText) {
+      try { responseData = JSON.parse(responseText); } catch { responseData = { reply: responseText }; }
+    }
+    if (!response.ok) throw new Error(`Webhook returned ${response.status}`);
+
+    intakeSubmitted = true;
+    chatChoice.disabled = false;
+    chatChoiceHint.textContent = "Continue the conversation";
+    leadStatus.textContent = "Thanks. Select Chat agent to continue.";
+    leadForm.querySelectorAll("input").forEach((input) => { input.disabled = true; });
+    leadSubmitButton.querySelector("span").textContent = "Submitted";
+  } catch (error) {
+    console.error("Chat webhook request failed:", error);
+    leadStatus.textContent = "Couldn't submit your details. Please try again.";
+    leadSubmitButton.disabled = false;
+  }
 }
 
 function beginChat() {
-  leadCapture = { step: "message", message: "", name: "", email: "", phone: "" };
-  handoffSent = false;
+  if (!intakeSubmitted) return;
+  leadCapture.message = "";
   messages.replaceChildren();
-  addMessage("Hi there, how can I help you today?", "assistant");
+  addMessage(`Hi ${leadCapture.name.split(/\s+/)[0]}, how can I help you today?`, "assistant");
   chatStatus.textContent = "";
+  chatForm.hidden = false;
   messageInput.disabled = false;
   sendButton.disabled = false;
-  updateInputForStep();
 }
 
 function getConversationId() {
@@ -266,12 +271,16 @@ launcher.addEventListener("click", () => setOpen(panel.hidden));
 closeButton.addEventListener("click", () => setOpen(false));
 actionButtons.forEach((button) => button.addEventListener("click", () => {
   const action = button.dataset.action;
-  if (action === "chat") beginChat();
+  if (action === "chat") {
+    if (!intakeSubmitted) return;
+    beginChat();
+  }
   setMode(action === "chat" ? "chat" : "voice");
   if (action === "talk") toggleCall();
 }));
 backButtons.forEach((button) => button.addEventListener("click", () => setMode("home")));
 chatForm.addEventListener("submit", sendMessage);
+leadForm.addEventListener("submit", submitLead);
 callButton.addEventListener("click", toggleCall);
 
 document.addEventListener("keydown", (event) => {
