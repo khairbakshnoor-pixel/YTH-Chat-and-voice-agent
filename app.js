@@ -96,7 +96,7 @@
     closeAssistantChoice();
 
     if (chatDialog && !chatDialog.open) {
-      chatDialog.showModal();
+      chatDialog.show();
       loadChatWidget();
     }
   });
