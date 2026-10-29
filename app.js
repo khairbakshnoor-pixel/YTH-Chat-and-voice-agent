@@ -42,6 +42,7 @@
   let voiceWidgetScript;
   let chatWidgetScript;
   let chatWidgetLoading = false;
+  let voiceLauncherObserver;
 
   function openAssistantChoice() {
     if (choiceDialog && !choiceDialog.open) {
@@ -152,6 +153,8 @@
 
   // Open Retell Voice Assistant
   function openVoiceWidget() {
+    hideVoiceLauncher();
+
     const alreadyOpen = findRetellElement(
       'button[aria-label="Minimize window"]'
     );
@@ -170,6 +173,29 @@
 
     launcher.click();
     return true;
+  }
+
+  function hideVoiceLauncher() {
+    const launcher = findRetellElement(
+      'button[aria-label="Open Assistant"], ' +
+      'button[aria-label="Return to active call"]'
+    );
+
+    if (launcher) {
+      launcher.style.display = "none";
+      launcher.setAttribute("aria-hidden", "true");
+      launcher.tabIndex = -1;
+    }
+
+    const root = document.getElementById("retell-widget-root");
+
+    if (root && !voiceLauncherObserver) {
+      voiceLauncherObserver = new MutationObserver(hideVoiceLauncher);
+      voiceLauncherObserver.observe(root, {
+        childList: true,
+        subtree: true
+      });
+    }
   }
 
   // Start voice conversation

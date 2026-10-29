@@ -637,6 +637,36 @@ h2 {
   line-height: 1.5;
 }
 
+.assistant-launcher {
+  position: fixed;
+  right: 24px;
+  bottom: 24px;
+  z-index: 999990;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-width: 164px;
+  min-height: 58px;
+  padding: 10px 20px;
+  color: #ffffff;
+  background: var(--ink);
+  border-radius: 999px;
+  box-shadow: 0 8px 18px #082c2c35;
+  font-size: 15px;
+  font-weight: 600;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.assistant-launcher:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px #082c2c45;
+}
+
+.assistant-launcher img {
+  flex: 0 0 28px;
+}
+
 .chat-notice[hidden] {
   display: none;
 }
@@ -951,6 +981,11 @@ h2 {
 
   .chat-notice {
     right: 16px;
+  }
+
+  .assistant-launcher {
+    right: 16px;
+    bottom: 16px;
   }
 }
 
