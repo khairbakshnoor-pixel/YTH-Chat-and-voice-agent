@@ -391,8 +391,8 @@
             <span class="step-number">01</span>
             <h3>Say hello</h3>
             <p>
-              Click "Chat with YTH" to jump straight
-              to the live AI chat on this page.
+              Click "Chat with YTH" to choose whether
+              you'd like to chat or talk with YTH.
             </p>
           </li>
 
@@ -400,8 +400,8 @@
             <span class="step-number">02</span>
             <h3>Choose your way</h3>
             <p>
-              Type into the GHL chat above, or select
-              "Talk to YTH" to start a voice conversation.
+              Choose Chat Assistant to open the live chat,
+              or Voice Assistant to start talking.
             </p>
           </li>
 
@@ -482,6 +482,54 @@
             id="dismiss-notice"
             aria-label="Dismiss notification">×</button>
   </div>
+  </div>
+  <dialog class="assistant-choice"
+          id="assistant-choice"
+          aria-labelledby="assistant-choice-title"
+          aria-describedby="assistant-choice-description">
+
+    <button class="assistant-choice-close"
+            type="button"
+            data-close-assistant-choice
+            aria-label="Close assistant choices">×</button>
+
+    <img class="assistant-choice-logo"
+         src="./yth-mark.svg"
+         width="38"
+         height="38"
+         alt="" />
+
+    <h2 id="assistant-choice-title">How can we help you today?</h2>
+    <p id="assistant-choice-description">
+      Choose how you'd like to interact with our assistant.
+    </p>
+
+    <div class="assistant-choice-options">
+      <button class="assistant-choice-option"
+              type="button"
+              data-open-voice>
+        <span class="assistant-choice-icon">
+          <svg class="icon">
+            <use href="#icon-mic" />
+          </svg>
+        </span>
+        <strong>Voice Assistant</strong>
+        <span>Have a quick conversation and get help instantly.</span>
+      </button>
+
+      <button class="assistant-choice-option"
+              type="button"
+              data-start-chat>
+        <span class="assistant-choice-icon">
+          <svg class="icon">
+            <use href="#icon-chat" />
+          </svg>
+        </span>
+        <strong>Chat Assistant</strong>
+        <span>Type your question and we'll guide you through.</span>
+      </button>
+    </div>
+  </dialog>
 
   <noscript>
     <p class="noscript-note">

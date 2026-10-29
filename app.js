@@ -9,6 +9,22 @@
     ...document.querySelectorAll("[data-open-voice]")
   ];
 
+  const chatLinks = [
+    ...document.querySelectorAll('a[href="#yth-chat"]')
+  ];
+
+  const choiceDialog = document.getElementById(
+    "assistant-choice"
+  );
+
+  const chatChoice = document.querySelector(
+    "[data-start-chat]"
+  );
+
+  const closeChoice = document.querySelector(
+    "[data-close-assistant-choice]"
+  );
+
   const notice = document.getElementById("chat-notice");
   const status = document.getElementById("chat-status");
 
@@ -22,6 +38,38 @@
 
   let opening = false;
   let widgetFailed = false;
+
+  function closeAssistantChoice() {
+    if (choiceDialog?.open) {
+      choiceDialog.close();
+    }
+  }
+
+  chatLinks.forEach(link => {
+    link.addEventListener("click", event => {
+      event.preventDefault();
+
+      if (choiceDialog && !choiceDialog.open) {
+        choiceDialog.showModal();
+      }
+    });
+  });
+
+  closeChoice?.addEventListener("click", closeAssistantChoice);
+
+  chatChoice?.addEventListener("click", () => {
+    closeAssistantChoice();
+
+    const chatCard = document.getElementById("yth-chat");
+
+    if (chatCard) {
+      chatCard.scrollIntoView({
+        behavior: "smooth",
+        block: "center"
+      });
+      chatCard.focus({ preventScroll: true });
+    }
+  });
 
   // Show voice notification
   function showNotice(message) {
@@ -93,6 +141,8 @@
   // Start voice conversation
   async function startVoice() {
     if (opening) return;
+
+    closeAssistantChoice();
 
     if (notice) notice.hidden = true;
 
