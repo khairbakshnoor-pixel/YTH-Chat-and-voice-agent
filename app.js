@@ -43,7 +43,7 @@
   let chatWidgetScript;
   let chatWidgetLoading = false;
   let chatWidgetLayoutObserver;
-  const observedChatRoots = new WeakSet();
+  let observedChatWidgetRoot;
   let voiceLauncherObserver;
 
   function configureChatWidgetLayout() {
@@ -52,12 +52,13 @@
 
     if (!widgetRoot) return;
 
-    if (!observedChatRoots.has(widgetRoot)) {
-      observedChatRoots.add(widgetRoot);
+    if (chatWidgetLayoutObserver &&
+        observedChatWidgetRoot !== widgetRoot) {
       chatWidgetLayoutObserver?.observe(widgetRoot, {
         childList: true,
         subtree: true
       });
+      observedChatWidgetRoot = widgetRoot;
     }
 
     if (!widgetRoot.getElementById("yth-chat-layout")) {
@@ -87,14 +88,6 @@
 
     if (!paneRoot) return false;
 
-    if (!observedChatRoots.has(paneRoot)) {
-      observedChatRoots.add(paneRoot);
-      chatWidgetLayoutObserver?.observe(paneRoot, {
-        childList: true,
-        subtree: true
-      });
-    }
-
     if (!paneRoot.getElementById("yth-chat-layout")) {
       const style = document.createElement("style");
       style.id = "yth-chat-layout";
@@ -106,6 +99,10 @@
         '.footer{flex:0 0 auto!important}';
       paneRoot.append(style);
     }
+
+    chatWidgetLayoutObserver?.disconnect();
+    chatWidgetLayoutObserver = undefined;
+    observedChatWidgetRoot = undefined;
 
     return true;
   }
@@ -297,7 +294,7 @@
       voiceWidgetScript.dataset.voicePublicKey =
         "public_key_249af822a5d70f5e84d2b";
       voiceWidgetScript.dataset.voiceAgentId =
-        "agent_ab14ae832f0140d4b4c90e236b";
+        "agent_2b5727c8a6c38664748b2d28cc";
       voiceWidgetScript.dataset.title = "YTH Voice Assistant";
       voiceWidgetScript.dataset.logoUrl = "./yth-mark.svg";
       voiceWidgetScript.dataset.botName = "YTH Voice Assistant";
