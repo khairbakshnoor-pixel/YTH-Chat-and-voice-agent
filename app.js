@@ -45,6 +45,8 @@
   let chatWidgetLayoutObserver;
   let observedChatWidgetRoot;
   let voiceLauncherObserver;
+  let voiceBrandingObserver;
+  const observedVoiceShadowRoots = new WeakSet();
 
   function configureChatWidgetLayout() {
     const widget = chatMount?.querySelector("chat-widget");
@@ -210,6 +212,15 @@
     if (!mount) return null;
 
     function search(root) {
+      if (root.host && voiceBrandingObserver &&
+          !observedVoiceShadowRoots.has(root)) {
+        observedVoiceShadowRoots.add(root);
+        voiceBrandingObserver.observe(root, {
+          childList: true,
+          subtree: true
+        });
+      }
+
       const match = root.querySelector(selector);
 
       if (match) return match;
@@ -226,6 +237,24 @@
     }
 
     return search(mount);
+  }
+
+  function hideVoiceBranding() {
+    const subtitle = findRetellElement('[class*="brandSubtitle"]');
+
+    if (subtitle?.textContent.trim() === "Your RetellAI assistant") {
+      subtitle.style.setProperty("display", "none", "important");
+    }
+
+    const attributionLink = findRetellElement(
+      'a[href*="retellai.com"]'
+    );
+    const attribution = attributionLink?.parentElement;
+
+    if (attribution?.textContent.replace(/\s+/g, " ").trim() ===
+        "Powered by Retell") {
+      attribution.style.setProperty("display", "none", "important");
+    }
   }
 
   // Open Retell Voice Assistant
@@ -253,6 +282,8 @@
   }
 
   function hideVoiceLauncher() {
+    hideVoiceBranding();
+
     const launcher = findRetellElement(
       'button[aria-label="Open Assistant"], ' +
       'button[aria-label="Return to active call"]'
@@ -265,6 +296,10 @@
     }
 
     const root = document.getElementById("retell-widget-root");
+
+    if (root && !voiceBrandingObserver) {
+      voiceBrandingObserver = new MutationObserver(hideVoiceLauncher);
+    }
 
     if (root && !voiceLauncherObserver) {
       voiceLauncherObserver = new MutationObserver(hideVoiceLauncher);
