@@ -1135,7 +1135,7 @@ h2 {
 .chat-widget-dialog {
   position: fixed;
   inset: auto 24px 96px auto;
-  width: min(500px, calc(100vw - 32px));
+  width: min(620px, calc(100vw - 32px));
   height: min(590px, calc(100dvh - 112px));
   max-width: none;
   max-height: none;
@@ -1314,11 +1314,13 @@ h2 {
 
 .assistant-choice {
   position: fixed;
+  inset: auto 24px 96px auto;
   box-sizing: border-box;
   width: min(calc(100% - 32px), 430px);
   max-width: none;
-  max-height: calc(100% - 32px);
-  margin: auto;
+  max-height: calc(100dvh - 120px);
+  margin: 0;
+  overflow: auto;
   padding: 18px;
   color: #142744;
   background: #ffffff;
@@ -1523,10 +1525,18 @@ h2 {
 
   .chat-widget-dialog,
   .chat-widget-dialog[open] {
+    left: auto;
     right: 16px;
     bottom: 88px;
-    width: min(500px, calc(100vw - 32px));
+    width: calc(100vw - 32px);
     height: min(590px, calc(100dvh - 104px));
+  }
+
+  .assistant-choice {
+    right: 16px;
+    bottom: 88px;
+    width: calc(100vw - 32px);
+    max-height: calc(100dvh - 104px);
   }
 
   .hero-art {
