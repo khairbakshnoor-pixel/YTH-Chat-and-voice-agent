@@ -19,24 +19,6 @@
   <link rel="stylesheet" href="./styles.css" />
   <script src="./app.js" defer></script>
 
-  <!-- Retell VOICE ONLY -->
-  <script
-    id="retell-widget"
-    src="https://dashboard.retellai.com/retell-widget-v2.js"
-    type="module"
-    data-voice-public-key="public_key_249af822a5d70f5e84d2b"
-    data-voice-agent-id="agent_ab14ae832f0140d4b4c90e236b"
-    data-title="YTH Voice Assistant"
-    data-logo-url="./yth-mark.svg"
-    data-bot-name="YTH Voice Assistant"
-    data-fab-text="Talk to YTH"
-    data-fab-icon-url="./yth-mark.svg"
-    data-popup-message="Prefer talking? Start a voice conversation."
-    data-show-ai-popup="false"
-    data-theme-color="#123f45"
-    data-component-color="#14766f"
-    data-auto-open="false"
-  ></script>
 </head>
 
 <body>
@@ -90,13 +72,14 @@
 
       <a href="#how-it-works">How it works</a>
 
-      <a class="button button-small button-dark"
-         href="#yth-chat">
-        Let's talk
+      <button class="button button-small button-dark"
+              type="button"
+              data-open-assistant-choice>
+        Chat With Us
         <svg class="icon">
           <use href="#icon-arrow" />
         </svg>
-      </a>
+      </button>
 
     </nav>
   </header>
@@ -128,30 +111,31 @@
 
         <div class="hero-actions">
 
-          <a class="button button-lime"
-             href="#yth-chat">
+          <button class="button button-lime"
+                  type="button"
+                  data-open-assistant-choice>
 
             <svg class="icon">
               <use href="#icon-chat" />
             </svg>
 
-            Chat with YTH
+            Chat With Us
 
             <svg class="icon arrow">
               <use href="#icon-arrow" />
             </svg>
 
-          </a>
+          </button>
 
           <button class="text-link hero-voice-link"
                   type="button"
-                  data-open-voice>
+                  data-open-assistant-choice>
 
             <svg class="icon">
               <use href="#icon-mic" />
             </svg>
 
-            Talk to YTH
+            Talk With Us
             <span aria-hidden="true">↗</span>
           </button>
 
@@ -163,7 +147,7 @@
 
       </div>
 
-      <!-- RIGHT SIDE: REAL GHL CHATBOT -->
+      <!-- RIGHT SIDE: CHAT PREVIEW -->
       <div class="hero-art"
            aria-label="Chat with the YTH AI assistant">
 
@@ -184,48 +168,39 @@
           A conversation away.
         </div>
 
-        <!-- GHL LIVE CHAT CONTAINER -->
-        <div class="live-chat-card"
-             id="yth-chat"
-             tabindex="-1"
-             aria-label="YTH AI text chat">
-
-          <div class="live-chat-heading">
-
+        <div class="chat-preview-card" aria-hidden="true">
+          <div class="preview-header">
             <img src="./yth-mark.svg"
                  width="42"
                  height="42"
                  alt="" />
-
-            <div class="live-chat-title">
+            <div>
               <strong>YTH Assistant</strong>
-              <span>Ask us anything below</span>
+              <span>Here to help. Ready to listen.</span>
             </div>
-
-            <span class="live-chat-type">
-              AI CHAT
-            </span>
-
+            <span class="preview-dot"></span>
           </div>
 
-          <!-- GHL CONVERSATION AI WIDGET -->
-          <div class="ghl-chat-mount">
-
-            <script
-              src="https://widgets.leadconnectorhq.com/loader.js"
-              data-resources-url="https://widgets.leadconnectorhq.com/chat-widget/loader.js"
-              data-widget-id="6ad27f6acc8a6767ee65d462">
-            </script>
-
+          <div class="preview-conversation">
+            <p class="preview-label">LET'S START SOMETHING</p>
+            <p class="preview-message preview-message-assistant">
+              Hi there! 👋<br />
+              What can I help you with today?
+            </p>
+            <p class="preview-message preview-message-user">
+              I have a few questions.
+            </p>
+            <p class="preview-message">
+              You're in the right place. Let's take it one step at a time.
+            </p>
+            <p class="preview-disclaimer">Choose chat or voice to begin</p>
           </div>
 
         </div>
-        <!-- END GHL CHAT -->
 
-        <!-- RETELL VOICE BUTTON -->
         <button class="voice-badge"
                 type="button"
-                data-open-voice
+                data-open-assistant-choice
                 aria-label="Start a voice conversation with YTH">
 
           <span class="voice-icon">
@@ -236,7 +211,7 @@
 
           <span>
             More of a talker?
-            <strong>Start a voice chat</strong>
+            <strong>Talk With Us</strong>
           </span>
 
           <span class="waveform" aria-hidden="true">
@@ -326,7 +301,7 @@
 
         <button class="text-link"
                 type="button"
-                data-open-voice>
+                data-open-assistant-choice>
 
           Start voice chat
           <span aria-hidden="true">↗</span>
@@ -391,8 +366,8 @@
             <span class="step-number">01</span>
             <h3>Say hello</h3>
             <p>
-              Click "Chat with YTH" to choose whether
-              you'd like to chat or talk with YTH.
+              Click "Chat With Us" or "Talk With Us" to
+              choose how you'd like to connect with YTH.
             </p>
           </li>
 
@@ -400,8 +375,8 @@
             <span class="step-number">02</span>
             <h3>Choose your way</h3>
             <p>
-              Choose Chat Assistant to open the live chat,
-              or Voice Assistant to start talking.
+              Choose Chat Assistant to open the chat window,
+              or Voice Assistant to talk with YTH.
             </p>
           </li>
 
@@ -440,16 +415,17 @@
 
       </div>
 
-      <a class="button button-dark"
-         href="#yth-chat">
+      <button class="button button-dark"
+              type="button"
+              data-open-assistant-choice>
 
-        Chat with YTH
+        Chat With Us
 
         <svg class="icon">
           <use href="#icon-arrow" />
         </svg>
 
-      </a>
+      </button>
 
     </section>
 
@@ -482,7 +458,35 @@
             id="dismiss-notice"
             aria-label="Dismiss notification">×</button>
   </div>
-  </div>
+
+  <dialog class="chat-widget-dialog"
+          id="yth-chat"
+          aria-label="YTH Chat Assistant">
+    <button class="chat-widget-close"
+            type="button"
+            data-close-chat
+            aria-label="Close chat assistant">×</button>
+
+    <div class="live-chat-card">
+      <div class="live-chat-heading">
+        <img src="./yth-mark.svg"
+             width="42"
+             height="42"
+             alt="" />
+
+        <div class="live-chat-title">
+          <strong>YTH Assistant</strong>
+          <span>Ask us anything below</span>
+        </div>
+
+        <span class="live-chat-type">AI CHAT</span>
+      </div>
+
+      <div class="ghl-chat-mount">
+      </div>
+    </div>
+  </dialog>
+
   <dialog class="assistant-choice"
           id="assistant-choice"
           aria-labelledby="assistant-choice-title"

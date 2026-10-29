@@ -2,11 +2,12 @@
 (() => {
   "use strict";
 
-  // GHL text chat loads from index.html.
-  // Retell is used only for the voice assistant.
-
   const voiceButtons = [
     ...document.querySelectorAll("[data-open-voice]")
+  ];
+
+  const choiceButtons = [
+    ...document.querySelectorAll("[data-open-assistant-choice]")
   ];
 
   const chatLinks = [
@@ -21,6 +22,10 @@
     "[data-start-chat]"
   );
 
+  const chatDialog = document.getElementById("yth-chat");
+  const chatMount = document.querySelector(".ghl-chat-mount");
+  const chatClose = document.querySelector("[data-close-chat]");
+
   const closeChoice = document.querySelector(
     "[data-close-assistant-choice]"
   );
@@ -32,12 +37,17 @@
     "dismiss-notice"
   );
 
-  const widgetScript = document.getElementById(
-    "retell-widget"
-  );
-
   let opening = false;
   let widgetFailed = false;
+  let voiceWidgetScript;
+  let chatWidgetScript;
+  let chatWidgetLoading = false;
+
+  function openAssistantChoice() {
+    if (choiceDialog && !choiceDialog.open) {
+      choiceDialog.showModal();
+    }
+  }
 
   function closeAssistantChoice() {
     if (choiceDialog?.open) {
@@ -45,29 +55,58 @@
     }
   }
 
+  choiceButtons.forEach(button => {
+    button.addEventListener("click", openAssistantChoice);
+  });
+
   chatLinks.forEach(link => {
     link.addEventListener("click", event => {
       event.preventDefault();
-
-      if (choiceDialog && !choiceDialog.open) {
-        choiceDialog.showModal();
-      }
+      openAssistantChoice();
     });
   });
 
   closeChoice?.addEventListener("click", closeAssistantChoice);
 
+  function loadChatWidget() {
+    if (!chatMount || chatWidgetScript || chatWidgetLoading) return;
+
+    chatWidgetLoading = true;
+    chatWidgetScript = document.createElement("script");
+    chatWidgetScript.src =
+      "https://widgets.leadconnectorhq.com/loader.js";
+    chatWidgetScript.dataset.resourcesUrl =
+      "https://widgets.leadconnectorhq.com/chat-widget/loader.js";
+    chatWidgetScript.dataset.widgetId = "6ad27f6acc8a6767ee65d462";
+    chatWidgetScript.addEventListener("load", () => {
+      chatWidgetLoading = false;
+    }, { once: true });
+    chatWidgetScript.addEventListener("error", () => {
+      chatWidgetLoading = false;
+      chatWidgetScript = undefined;
+      showNotice(
+        "Chat assistant could not load. Please refresh the page and try again."
+      );
+    }, { once: true });
+    chatMount.append(chatWidgetScript);
+  }
+
   chatChoice?.addEventListener("click", () => {
     closeAssistantChoice();
 
-    const chatCard = document.getElementById("yth-chat");
+    if (chatDialog && !chatDialog.open) {
+      chatDialog.showModal();
+      loadChatWidget();
+    }
+  });
 
-    if (chatCard) {
-      chatCard.scrollIntoView({
-        behavior: "smooth",
-        block: "center"
-      });
-      chatCard.focus({ preventScroll: true });
+  chatClose?.addEventListener("click", () => {
+    chatDialog?.close();
+  });
+
+  chatDialog?.addEventListener("click", event => {
+    if (event.target === chatDialog) {
+      chatDialog.close();
     }
   });
 
@@ -82,11 +121,6 @@
   // Dismiss notification
   dismiss?.addEventListener("click", () => {
     notice.hidden = true;
-  });
-
-  // Detect Retell script error
-  widgetScript?.addEventListener("error", () => {
-    widgetFailed = true;
   });
 
   // Find Retell elements inside shadow DOM
@@ -148,6 +182,33 @@
 
     if (openVoiceWidget()) return;
 
+    if (!voiceWidgetScript) {
+      voiceWidgetScript = document.createElement("script");
+      voiceWidgetScript.id = "retell-widget";
+      voiceWidgetScript.type = "module";
+      voiceWidgetScript.src =
+        "https://dashboard.retellai.com/retell-widget-v2.js";
+      voiceWidgetScript.dataset.voicePublicKey =
+        "public_key_249af822a5d70f5e84d2b";
+      voiceWidgetScript.dataset.voiceAgentId =
+        "agent_ab14ae832f0140d4b4c90e236b";
+      voiceWidgetScript.dataset.title = "YTH Voice Assistant";
+      voiceWidgetScript.dataset.logoUrl = "./yth-mark.svg";
+      voiceWidgetScript.dataset.botName = "YTH Voice Assistant";
+      voiceWidgetScript.dataset.fabText = "Talk With Us";
+      voiceWidgetScript.dataset.fabIconUrl = "./yth-mark.svg";
+      voiceWidgetScript.dataset.popupMessage =
+        "Prefer talking? Start a voice conversation.";
+      voiceWidgetScript.dataset.showAiPopup = "false";
+      voiceWidgetScript.dataset.themeColor = "#123f45";
+      voiceWidgetScript.dataset.componentColor = "#14766f";
+      voiceWidgetScript.dataset.autoOpen = "false";
+      voiceWidgetScript.addEventListener("error", () => {
+        widgetFailed = true;
+      }, { once: true });
+      document.head.append(voiceWidgetScript);
+    }
+
     opening = true;
 
     for (const button of voiceButtons) {
@@ -173,8 +234,7 @@
 
       showNotice(
         "Voice assistant could not load. " +
-        "Refresh the page or use the Talk to YTH " +
-        "button at the bottom corner."
+        "Please refresh the page and choose voice again."
       );
 
     } finally {
