@@ -1,91 +1,145 @@
-(() => {
-  'use strict';
 
-  const triggers = document.querySelectorAll('[data-open-chat]');
-  const notice = document.getElementById('chat-notice');
-  const status = document.getElementById('chat-status');
-  const widgetScript = document.getElementById('retell-widget');
+(() => {
+  "use strict";
+
+  // GHL text chat loads from index.html.
+  // Retell is used only for the voice assistant.
+
+  const voiceButtons = [
+    ...document.querySelectorAll("[data-open-voice]")
+  ];
+
+  const notice = document.getElementById("chat-notice");
+  const status = document.getElementById("chat-status");
+
+  const dismiss = document.getElementById(
+    "dismiss-notice"
+  );
+
+  const widgetScript = document.getElementById(
+    "retell-widget"
+  );
+
   let opening = false;
   let widgetFailed = false;
 
+  // Show voice notification
   function showNotice(message) {
+    if (!notice || !status) return;
+
     status.textContent = message;
     notice.hidden = false;
   }
 
-  document.getElementById('dismiss-notice').addEventListener('click', () => {
+  // Dismiss notification
+  dismiss?.addEventListener("click", () => {
     notice.hidden = true;
   });
 
-  widgetScript.addEventListener('error', () => {
+  // Detect Retell script error
+  widgetScript?.addEventListener("error", () => {
     widgetFailed = true;
   });
 
-  // Retell renders inside an open shadow root. Keep lookups scoped to its
-  // own mount, and use accessible labels rather than generated CSS classes.
-  function findWidgetElement(selector) {
-    const root = document.getElementById('retell-widget-root');
-    if (!root) return null;
+  // Find Retell elements inside shadow DOM
+  function findRetellElement(selector) {
+    const mount = document.getElementById(
+      "retell-widget-root"
+    );
 
-    function search(container) {
-      const match = container.querySelector(selector);
+    if (!mount) return null;
+
+    function search(root) {
+      const match = root.querySelector(selector);
+
       if (match) return match;
-      for (const element of container.querySelectorAll('*')) {
+
+      for (const element of root.querySelectorAll("*")) {
         if (element.shadowRoot) {
-          const shadowMatch = search(element.shadowRoot);
-          if (shadowMatch) return shadowMatch;
+          const nested = search(element.shadowRoot);
+
+          if (nested) return nested;
         }
       }
+
       return null;
     }
 
-    return search(root);
+    return search(mount);
   }
 
-  function openWidget() {
-    const alreadyOpen = findWidgetElement('button[aria-label="Minimize window"]');
+  // Open Retell Voice Assistant
+  function openVoiceWidget() {
+    const alreadyOpen = findRetellElement(
+      'button[aria-label="Minimize window"]'
+    );
+
     if (alreadyOpen) {
-      const input = findWidgetElement('textarea, input[type="text"], [contenteditable="true"]');
-      (input || alreadyOpen).focus();
+      alreadyOpen.focus();
       return true;
     }
 
-    const launcher = findWidgetElement('button[aria-label="Open Assistant"], button[aria-label="Return to active call"]');
+    const launcher = findRetellElement(
+      'button[aria-label="Open Assistant"], ' +
+      'button[aria-label="Return to active call"]'
+    );
+
     if (!launcher) return false;
+
     launcher.click();
     return true;
   }
 
-  async function openAssistant() {
+  // Start voice conversation
+  async function startVoice() {
     if (opening) return;
-    notice.hidden = true;
-    if (openWidget()) return;
+
+    if (notice) notice.hidden = true;
+
+    if (openVoiceWidget()) return;
 
     opening = true;
-    triggers.forEach(button => {
+
+    for (const button of voiceButtons) {
       button.disabled = true;
-      button.setAttribute('aria-busy', 'true');
-    });
-    showNotice('Opening your YTH assistant…');
+      button.setAttribute("aria-busy", "true");
+    }
+
+    showNotice("Opening your YTH voice assistant...");
 
     try {
       const deadline = Date.now() + 15000;
+
       while (!widgetFailed && Date.now() < deadline) {
-        await new Promise(resolve => setTimeout(resolve, 250));
-        if (openWidget()) {
-          notice.hidden = true;
+        await new Promise(resolve =>
+          setTimeout(resolve, 250)
+        );
+
+        if (openVoiceWidget()) {
+          if (notice) notice.hidden = true;
           return;
         }
       }
-      showNotice('The assistant couldn’t load. Check your connection, then refresh the page to try again.');
+
+      showNotice(
+        "Voice assistant could not load. " +
+        "Refresh the page or use the Talk to YTH " +
+        "button at the bottom corner."
+      );
+
     } finally {
       opening = false;
-      triggers.forEach(button => {
+
+      for (const button of voiceButtons) {
         button.disabled = false;
-        button.removeAttribute('aria-busy');
-      });
+        button.removeAttribute("aria-busy");
+      }
     }
   }
 
-  triggers.forEach(button => button.addEventListener('click', openAssistant));
+  // Connect all voice buttons
+  voiceButtons.forEach(button => {
+    button.addEventListener("click", startVoice);
+  });
+
 })();
