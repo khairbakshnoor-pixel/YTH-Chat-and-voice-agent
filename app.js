@@ -42,7 +42,73 @@
   let voiceWidgetScript;
   let chatWidgetScript;
   let chatWidgetLoading = false;
+  let chatWidgetLayoutObserver;
+  const observedChatRoots = new WeakSet();
   let voiceLauncherObserver;
+
+  function configureChatWidgetLayout() {
+    const widget = chatMount?.querySelector("chat-widget");
+    const widgetRoot = widget?.shadowRoot;
+
+    if (!widgetRoot) return;
+
+    if (!observedChatRoots.has(widgetRoot)) {
+      observedChatRoots.add(widgetRoot);
+      chatWidgetLayoutObserver?.observe(widgetRoot, {
+        childList: true,
+        subtree: true
+      });
+    }
+
+    if (!widgetRoot.getElementById("yth-chat-layout")) {
+      const style = document.createElement("style");
+      style.id = "yth-chat-layout";
+      style.textContent =
+        ':host{display:block!important;width:100%!important;' +
+        'height:100%!important;min-height:0!important}' +
+        ':host>div{display:block!important;width:100%!important;' +
+        'height:100%!important;min-height:0!important}' +
+        'div[data-active="true"]{display:flex!important;' +
+        'flex-direction:column!important;width:100%!important;' +
+        'height:100%!important;min-height:0!important}' +
+        '#lc_text-widget{display:flex!important;flex:1 1 auto!important;' +
+        'flex-direction:column!important;justify-content:flex-start!important;' +
+        'width:100%!important;height:100%!important;min-height:0!important}' +
+        '#lc_text-widget--box{display:flex!important;flex:1 1 auto!important;' +
+        'width:100%!important;height:100%!important;min-height:0!important}' +
+        '#lc_text-widget--box>.lc_text-widget--header-wrapper{' +
+        'flex:0 0 auto!important}' +
+        '#lc_text-widget--box>chat-pane{display:flex!important;' +
+        'flex:1 1 auto!important;min-height:0!important;height:auto!important}';
+      widgetRoot.append(style);
+    }
+
+    const paneRoot = widgetRoot.querySelector("chat-pane")?.shadowRoot;
+
+    if (!paneRoot) return false;
+
+    if (!observedChatRoots.has(paneRoot)) {
+      observedChatRoots.add(paneRoot);
+      chatWidgetLayoutObserver?.observe(paneRoot, {
+        childList: true,
+        subtree: true
+      });
+    }
+
+    if (!paneRoot.getElementById("yth-chat-layout")) {
+      const style = document.createElement("style");
+      style.id = "yth-chat-layout";
+      style.textContent =
+        ':host{display:flex!important;flex-direction:column!important;' +
+        'flex:1 1 auto!important;min-height:0!important;height:100%!important}' +
+        'chat-conversation{display:block!important;flex:1 1 auto!important;' +
+        'min-height:0!important;height:100%!important}' +
+        '.footer{flex:0 0 auto!important}';
+      paneRoot.append(style);
+    }
+
+    return true;
+  }
 
   function openAssistantChoice() {
     if (choiceDialog && !choiceDialog.open) {
@@ -73,6 +139,13 @@
     if (!chatMount || chatWidgetScript || chatWidgetLoading) return;
 
     chatWidgetLoading = true;
+    chatWidgetLayoutObserver = new MutationObserver(
+      configureChatWidgetLayout
+    );
+    chatWidgetLayoutObserver.observe(chatMount, {
+      childList: true,
+      subtree: true
+    });
     chatWidgetScript = document.createElement("script");
     chatWidgetScript.src =
       "https://widgets.leadconnectorhq.com/loader.js";
@@ -81,6 +154,13 @@
     chatWidgetScript.dataset.widgetId = "6ad27f6acc8a6767ee65d462";
     chatWidgetScript.addEventListener("load", () => {
       chatWidgetLoading = false;
+      configureChatWidgetLayout();
+      customElements.whenDefined("chat-widget").then(
+        configureChatWidgetLayout
+      );
+      customElements.whenDefined("chat-pane").then(
+        configureChatWidgetLayout
+      );
     }, { once: true });
     chatWidgetScript.addEventListener("error", () => {
       chatWidgetLoading = false;
