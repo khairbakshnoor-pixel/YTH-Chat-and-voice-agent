@@ -45,6 +45,7 @@
   let chatWidgetLoading = false;
   let chatWidgetLayoutObserver;
   let observedChatWidgetRoot;
+  let observedChatPaneRoot;
   let voiceLauncherObserver;
   let voiceBrandingObserver;
   const observedVoiceShadowRoots = new WeakSet();
@@ -91,6 +92,15 @@
 
     if (!paneRoot) return false;
 
+    if (chatWidgetLayoutObserver &&
+        observedChatPaneRoot !== paneRoot) {
+      chatWidgetLayoutObserver.observe(paneRoot, {
+        childList: true,
+        subtree: true
+      });
+      observedChatPaneRoot = paneRoot;
+    }
+
     if (!paneRoot.getElementById("yth-chat-layout")) {
       const style = document.createElement("style");
       style.id = "yth-chat-layout";
@@ -99,13 +109,31 @@
         'flex:1 1 auto!important;min-height:0!important;height:100%!important}' +
         'chat-conversation{display:block!important;flex:1 1 auto!important;' +
         'min-height:0!important;height:100%!important}' +
-        '.footer{flex:0 0 auto!important}';
+        '.footer{flex:0 0 auto!important}' +
+        '.chat-suggestions{display:grid;grid-template-columns:' +
+        'repeat(2,minmax(0,1fr));gap:7px;padding:10px 12px;' +
+        'background:#fff;border-top:1px solid #e0e8e2}' +
+        '.chat-suggestions[hidden]{display:none}' +
+        '.chat-suggestion{min-height:32px;padding:6px 10px;color:#123f45;' +
+        'background:#f7faf7;border:1px solid #dce3dc;border-radius:999px;' +
+        'font:11px/1.25 "Segoe UI",Arial,sans-serif;cursor:pointer}' +
+        '.chat-suggestion:hover{background:#d4ee9d;border-color:#d4ee9d}';
       paneRoot.append(style);
+    }
+
+    const chatFooter = paneRoot.querySelector(".footer");
+    if (!chatFooter) return false;
+
+    if (chatSuggestions &&
+        chatSuggestions.parentElement !== paneRoot) {
+      chatFooter.before(chatSuggestions);
+      chatSuggestions.hidden = false;
     }
 
     chatWidgetLayoutObserver?.disconnect();
     chatWidgetLayoutObserver = undefined;
     observedChatWidgetRoot = undefined;
+    observedChatPaneRoot = undefined;
 
     return true;
   }
