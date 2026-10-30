@@ -24,6 +24,7 @@
 
   const chatDialog = document.getElementById("yth-chat");
   const chatMount = document.querySelector(".ghl-chat-mount");
+  const chatSuggestions = document.querySelector(".chat-suggestions");
   const chatClose = document.querySelector("[data-close-chat]");
 
   const closeChoice = document.querySelector(
@@ -120,6 +121,108 @@
       choiceDialog.close();
     }
   }
+
+  function findChatElements(selector) {
+    const matches = [];
+
+    function search(root) {
+      matches.push(...root.querySelectorAll(selector));
+
+      for (const element of root.querySelectorAll("*")) {
+        if (element.shadowRoot) {
+          search(element.shadowRoot);
+        }
+      }
+    }
+
+    if (chatMount) search(chatMount);
+    return matches;
+  }
+
+  function sendChatSuggestion(message) {
+    const editors = findChatElements(
+      'textarea, input:not([type="hidden"]), [contenteditable="true"]'
+    ).filter(element =>
+      !element.disabled && element.getClientRects().length > 0
+    );
+    const editor = editors.find(element =>
+      /message|chat|reply/i.test(
+        `${element.getAttribute("placeholder") || ""} ` +
+        `${element.getAttribute("aria-label") || ""}`
+      )
+    ) || editors[editors.length - 1];
+
+    if (!editor) {
+      showNotice(
+        "Chat assistant is still loading. Please try your suggestion again."
+      );
+      return false;
+    }
+
+    editor.focus();
+
+    if (editor instanceof HTMLInputElement ||
+        editor instanceof HTMLTextAreaElement) {
+      const valueSetter = Object.getOwnPropertyDescriptor(
+        Object.getPrototypeOf(editor),
+        "value"
+      )?.set;
+
+      if (valueSetter) {
+        valueSetter.call(editor, message);
+      } else {
+        editor.value = message;
+      }
+    } else {
+      editor.textContent = message;
+    }
+
+    editor.dispatchEvent(new InputEvent("input", {
+      bubbles: true,
+      composed: true,
+      inputType: "insertText",
+      data: message
+    }));
+
+    const sendButton = findChatElements(
+      'button[type="submit"], button[aria-label], button[title]'
+    ).find(button =>
+      button.type === "submit" ||
+      /send/i.test(
+        `${button.getAttribute("aria-label") || ""} ` +
+        `${button.getAttribute("title") || ""}`
+      )
+    );
+
+    if (sendButton && !sendButton.disabled) {
+      sendButton.click();
+    } else {
+      editor.dispatchEvent(new KeyboardEvent("keydown", {
+        key: "Enter",
+        code: "Enter",
+        bubbles: true,
+        composed: true
+      }));
+      editor.dispatchEvent(new KeyboardEvent("keyup", {
+        key: "Enter",
+        code: "Enter",
+        bubbles: true,
+        composed: true
+      }));
+    }
+
+    return true;
+  }
+
+  chatSuggestions?.querySelectorAll("[data-chat-suggestion]").forEach(
+    button => {
+      button.addEventListener("click", () => {
+        if (sendChatSuggestion(button.dataset.chatSuggestion)) {
+          chatSuggestions.hidden = true;
+        }
+      });
+    }
+  );
 
   choiceButtons.forEach(button => {
     button.addEventListener("click", openAssistantChoice);
