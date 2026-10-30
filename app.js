@@ -239,6 +239,29 @@
       }));
     }
 
+    if (editor instanceof HTMLInputElement ||
+        editor instanceof HTMLTextAreaElement) {
+      const valueSetter = Object.getOwnPropertyDescriptor(
+        Object.getPrototypeOf(editor),
+        "value"
+      )?.set;
+
+      if (valueSetter) {
+        valueSetter.call(editor, "");
+      } else {
+        editor.value = "";
+      }
+    } else {
+      editor.textContent = "";
+    }
+
+    editor.dispatchEvent(new InputEvent("input", {
+      bubbles: true,
+      composed: true,
+      inputType: "deleteContentBackward",
+      data: null
+    }));
+
     return true;
   }
 
