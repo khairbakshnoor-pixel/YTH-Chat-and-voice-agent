@@ -111,11 +111,12 @@
         'min-height:0!important;height:100%!important}' +
         '.footer{flex:0 0 auto!important}' +
         '.chat-suggestions{display:grid;grid-template-columns:' +
-        'repeat(2,minmax(0,1fr));gap:7px;padding:10px 12px;' +
-        'background:#fff;border-top:1px solid #e0e8e2}' +
+        'repeat(2,minmax(0,1fr));gap:6px;padding:10px 12px;' +
+        'background:#fff}' +
         '.chat-suggestions[hidden]{display:none}' +
-        '.chat-suggestion{min-height:32px;padding:6px 10px;color:#123f45;' +
-        'background:#f7faf7;border:1px solid #dce3dc;border-radius:999px;' +
+        '.chat-suggestion{min-height:30px;padding:5px 9px;color:#123f45;' +
+        'background:rgba(247,250,247,.82);border:1px solid rgba(220,227,220,.88);' +
+        'border-radius:999px;' +
         'font:11px/1.25 "Segoe UI",Arial,sans-serif;cursor:pointer}' +
         '.chat-suggestion:hover{background:#d4ee9d;border-color:#d4ee9d}';
       paneRoot.append(style);
